@@ -1,6 +1,6 @@
 LIBRARY ieee;
 USE ieee.std_logic_1164.ALL;
---USE ieee.numeric_std.ALL;
+USE ieee.numeric_std.ALL;
  
 ENTITY bidi_shift_reg_tb IS
 END bidi_shift_reg_tb;
@@ -82,37 +82,77 @@ BEGIN
 		--Now test hold mode
 		ctrl <= "00";
 		data_in <= X"af34";
-		wait for clk_period;
+		wait for clk_period*4;
 		
 		assert data_out = X"b13f"
-		report "Load failed"
+		report "Hold failed"
 		severity error;
 		
-		--Now test shift left mode
-		ctrl <= "11";
-		data_in <= "0100101001010100";
+		--Reset for left shift test
+		data_in <= X"0000";
+		ctrl <= "00";
+		shift_in <= '0';
+		rst <= '1';
+      wait for clk_period;
+		rst <= '0';
 		wait for clk_period;
+		assert data_out = X"0000"
+		report "Reset failed"
+		severity error;
+		
+		--Now test shift left mode, start by shifting one in
 		ctrl <= "10";
-		data_in <= "0101101010010110";
 		shift_in <= '1';
 		wait for clk_period;
-		
-		assert data_out = "1001010010101001"
-		report "Left shift failed"
-		severity error;
-		
-		--Now test shift right mode
-		ctrl <= "11";
-		data_in <= "0100101001010100";
-		wait for clk_period;
-		ctrl <= "01";
-		data_in <= "0101101010010110";
 		shift_in <= '0';
-		wait for clk_period;
 		
-		assert data_out = "0010010100101010"
-		report "Right shift failed"
+		--Check that the first bit is shifted in correctly
+		assert data_out = "0000000000000001"
+		report "Shift left failed."
 		severity error;
+		
+		--shift left and check another 16 times
+		for i in 1 to 16 loop
+			wait for clk_period;
+			assert unsigned(data_out) = (unsigned'(X"0001") sll i)
+			report 	"Shift left test failed. Expected " & integer'image(to_integer(unsigned'(X"0001") sll i)) 
+						& " but got " & integer'image(to_integer(unsigned(data_out)))
+						& "."
+			severity error;
+		end loop;
+		
+		--Reset for right shift test
+		data_in <= X"0000";
+		ctrl <= "00";
+		shift_in <= '0';
+		rst <= '1';
+      wait for clk_period;
+		rst <= '0';
+		wait for clk_period;
+		assert data_out = X"0000"
+		report "Reset failed"
+		severity error;
+		
+		--Now test shift right mode, start by shifting one in
+		ctrl <= "01";
+		shift_in <= '1';
+		wait for clk_period;
+		shift_in <= '0';
+		
+		--Check that the first bit is shifted in correctly
+		assert data_out = "1000000000000000"
+		report "Shift right failed."
+		severity error;
+		
+		--shift left and check another 16 times
+		for i in 1 to 16 loop
+			wait for clk_period;
+			assert unsigned(data_out) = (unsigned'(X"8000") srl i)
+			report 	"Shift right test failed. Expected " & integer'image(to_integer(unsigned'(X"0001") sll i)) 
+						& " but got " & integer'image(to_integer(unsigned(data_out)))
+						& "."
+			severity error;
+		end loop;
 
       wait;
    end process;
