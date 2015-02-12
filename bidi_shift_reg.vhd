@@ -1,8 +1,7 @@
 library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
 
-
-
+--Bidirectional load
 entity bidi_shift_reg is
 	
 	generic (size: natural := 16);
@@ -40,11 +39,15 @@ begin
 							'U' when others;
 						
 	end generate;
+	
 	--first signal in data_q is shift in
 	data_q(0) <= shift_in;
-	--last signal in data_q is als shift in
+	
+	--last signal in data_q is also shift in
 	data_q(size+1) <= shift_in;
-	--data out is just data_q without the signals at the two ends
+	
+	--data out is just data_q without the signals at the two ends 
+	--(the two ends are the shift in lines)
 	data_out <= data_q(size downto 1);
 
 end Behavioral;

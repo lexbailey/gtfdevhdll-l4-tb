@@ -62,28 +62,33 @@ BEGIN
       -- hold reset state for 100 ns.
       wait for 100 ns;	
 	
+		--initial input values
 		data_in <= X"0000";
 		ctrl <= "00";
 		shift_in <= '0';
+		
+		--reset
 		rst <= '1';
       wait for clk_period;
 		rst <= '0';
 		wait for clk_period;
 
-      --start with load mode
+      --start with load mode test
 		ctrl <= "11";
 		data_in <= X"b13f";
 		wait for clk_period;
 		
+		--Self test that load worked
 		assert data_out = X"b13f"
 		report "Load failed"
 		severity error;
 		
-		--Now test hold mode
+		--Now hold for some clock cycles
 		ctrl <= "00";
 		data_in <= X"af34";
 		wait for clk_period*4;
 		
+		--self test that loaded value is still present
 		assert data_out = X"b13f"
 		report "Hold failed"
 		severity error;
@@ -96,6 +101,8 @@ BEGIN
       wait for clk_period;
 		rst <= '0';
 		wait for clk_period;
+		
+		--Self check that second reset worked
 		assert data_out = X"0000"
 		report "Reset failed"
 		severity error;
@@ -114,6 +121,7 @@ BEGIN
 		--shift left and check another 16 times
 		for i in 1 to 16 loop
 			wait for clk_period;
+			--expected output pattern is generated using "sll" operator (logical shift left)
 			assert unsigned(data_out) = (unsigned'(X"0001") sll i)
 			report 	"Shift left test failed. Expected " & integer'image(to_integer(unsigned'(X"0001") sll i)) 
 						& " but got " & integer'image(to_integer(unsigned(data_out)))
@@ -129,6 +137,8 @@ BEGIN
       wait for clk_period;
 		rst <= '0';
 		wait for clk_period;
+		
+		--Check reset again
 		assert data_out = X"0000"
 		report "Reset failed"
 		severity error;
@@ -147,6 +157,7 @@ BEGIN
 		--shift left and check another 16 times
 		for i in 1 to 16 loop
 			wait for clk_period;
+			--expected output pattern is generated using "srl" operator (logical shift right)
 			assert unsigned(data_out) = (unsigned'(X"8000") srl i)
 			report 	"Shift right test failed. Expected " & integer'image(to_integer(unsigned'(X"0001") sll i)) 
 						& " but got " & integer'image(to_integer(unsigned(data_out)))
